@@ -55,10 +55,10 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            robinmoser/${{ env.IMAGENAME }}:${{ github.run_number }}
+            robinmoser/${{ env.IMAGENAME }}:pipeline-${{ github.run_number }}
             robinmoser/${{ env.IMAGENAME }}:${{ env.version }}
             robinmoser/${{ env.IMAGENAME }}:latest
-            ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:${{ github.run_number }}
+            ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:pipeline-${{ github.run_number }}
             ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:${{ env.version }}
             ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:latest
 

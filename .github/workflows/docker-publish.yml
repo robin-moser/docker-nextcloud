@@ -18,6 +18,20 @@ jobs:
         name: Checkout code
         uses: actions/checkout@v2
       -
+        name: Extract Base Image Version
+        id: extract_version
+        run: |
+          # Assuming the base image is the first FROM line in Dockerfile
+          base=$(grep '^FROM' Dockerfile | head -n 1)
+          # Extracting the version number
+          version=$(echo $base | awk '{print $2}' | awk -F':' '{print $2}')
+          if [ -z "$version" ]; then
+            echo "Error: Version number could not be extracted."
+            exit 1
+          fi
+          echo "Base image version: $version"
+          echo "version=$version" >> $GITHUB_ENV
+      -
         name: Setup buildx
         uses: docker/setup-buildx-action@v2
       -
@@ -42,8 +56,10 @@ jobs:
           push: true
           tags: |
             robinmoser/${{ env.IMAGENAME }}:${{ github.run_number }}
+            robinmoser/${{ env.IMAGENAME }}:${{ env.version }}
             robinmoser/${{ env.IMAGENAME }}:latest
             ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:${{ github.run_number }}
+            ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:${{ env.version }}
             ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:latest
 
   update:

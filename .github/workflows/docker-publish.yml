@@ -1,7 +1,7 @@
 name: Docker Build & Publish
 env:
     IMAGENAME: nextcloud
-    SERVICENAME: Nextcloud_nextcloud
+    SERVICENAME: nextcloud_server
 
 on:
   push:
@@ -9,7 +9,6 @@ on:
       - main
 
 jobs:
-
   release:
 
     runs-on: ubuntu-latest
@@ -29,8 +28,11 @@ jobs:
             echo "Error: Version number could not be extracted."
             exit 1
           fi
-          echo "Base image version: $version"
-          echo "version=$version" >> $GITHUB_ENV
+          # Split version into major, minor, patch
+          IFS='.' read -r major minor patch <<< "$version"
+          test -n "$major" && echo "major=$major" >> $GITHUB_ENV || true
+          test -n "$minor" && echo "minor=.$minor" >> $GITHUB_ENV || true
+          test -n "$patch" && echo "patch=.$patch" >> $GITHUB_ENV || true
       -
         name: Setup buildx
         uses: docker/setup-buildx-action@v2
@@ -55,12 +57,17 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            robinmoser/${{ env.IMAGENAME }}:pipeline-${{ github.run_number }}
-            robinmoser/${{ env.IMAGENAME }}:${{ env.version }}
-            robinmoser/${{ env.IMAGENAME }}:latest
-            ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:pipeline-${{ github.run_number }}
-            ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:${{ env.version }}
             ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:latest
+            ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:${{ env.major }}
+            ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:${{ env.major }}${{ env.minor }}
+            ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:${{ env.major }}${{ env.minor }}${{ env.patch }}
+            ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:pipeline-${{ github.run_number }}
+
+            robinmoser/${{ env.IMAGENAME }}:latest
+            robinmoser/${{ env.IMAGENAME }}:${{ env.major }}
+            robinmoser/${{ env.IMAGENAME }}:${{ env.major }}${{ env.minor }}
+            robinmoser/${{ env.IMAGENAME }}:${{ env.major }}${{ env.minor }}${{ env.patch }}
+            robinmoser/${{ env.IMAGENAME }}:pipeline-${{ github.run_number }}
 
   update:
     runs-on: ubuntu-latest

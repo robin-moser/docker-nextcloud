@@ -1,0 +1,73 @@
+name: Publish
+env:
+  IMAGENAME: nextcloud
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - Dockerfile
+      - .github/workflows/**
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to private Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+
+      - name: Extract Base Image Version
+        id: extract_version
+        run: |
+          # Assuming the base image is the first FROM line in Dockerfile
+          base=$(grep '^FROM' Dockerfile | head -n 1)
+          # Extracting the version number
+          version=$(echo $base | awk '{print $2}' | awk -F':' '{print $2}')
+          if [ -z "$version" ]; then
+            echo "Error: Version number could not be extracted."
+            exit 1
+          fi
+          # Split version into major, minor, patch
+          IFS='.' read -r major minor patch <<< "$version"
+          test -n "$major" && echo "major=$major" >> $GITHUB_ENV || true
+          test -n "$minor" && echo "minor=.$minor" >> $GITHUB_ENV || true
+          test -n "$patch" && echo "patch=.$patch" >> $GITHUB_ENV || true
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGENAME }}
+            ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}
+          tags: |
+            type=raw,value=${{ env.major }}${{ env.minor }}${{ env.patch }},suffix=-build${{ github.run_number }}
+            type=raw,value=${{ env.major }}${{ env.minor }}${{ env.patch }}
+            type=raw,value=${{ env.major }}${{ env.minor }}
+            type=raw,value=${{ env.major }}
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          platforms: linux/amd64, linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

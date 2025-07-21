@@ -1,0 +1,49 @@
+name: Deploy to Portainer
+
+env:
+  STACKNAME: nextcloud
+  IMAGENAME: nextcloud
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get last successful build
+        id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          WORKFLOW="Publish"
+          JOB="release"
+          STEP="Build and push"
+          LABEL="org.opencontainers.image.version"
+
+          # Get the last successful run of the publish workflow
+          LAST_RUN=$(gh run list --workflow="$WORKFLOW" --status=success --limit=1 --json=databaseId --jq ".[0].databaseId")
+
+          # Extract the version number from the last successful workflow run
+          VERSION=$(gh run view $LAST_RUN --log | grep -P "$JOB\s+$STEP\s+$LABEL" | cut -d= -f2 | head -n1)
+
+          if [ -z "$VERSION" ]; then
+            echo "Error: Version number could not be retrieved."
+            exit 1
+          fi
+          # Write version to output
+          echo "full_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Found Version: $VERSION"
+
+      - name: Deploy stack
+        uses: robin-moser/portainer-stack-deploy@v2
+        with:
+          portainer-host: ${{ secrets.PORTAINER_HOST }}
+          token: ${{ secrets.PORTAINER_TOKEN }}
+          swarm-id: ${{ secrets.PORTAINER_SWARM_ID }}
+          stack-name: ${{ env.STACKNAME }}
+          tag-replacements: |
+            ${{ secrets.REGISTRY_URL }}/${{ env.IMAGENAME }}:${{ steps.version.outputs.full_version }}

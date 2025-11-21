@@ -2,7 +2,7 @@
 # Dockerfile: robinmoser/nextcloud
 # ++++++++++++++++++++++++++++++++++++++
 
-FROM nextcloud:31.0.7
+FROM nextcloud:31.0.11
 LABEL maintainer="Robin Moser"
 
 RUN apt-get update && apt-get install -y \

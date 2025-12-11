@@ -5,10 +5,49 @@ through ImageMagick and Ghostscript integration.
 
 ## Features
 
-- Based on official Nextcloud 31.0.7 image
-- Support for generating PDF thumbnails and image processing
-- Pre-configured ImageMagick policy to allow PDF processing
+- Based on official Nextcloud 31 image
+- Integrated support for generating video and document thumbnails through ffmpeg and LibreOffice
 - Multi-platform support (linux/amd64, linux/arm64)
+
+## Preview Configuration
+
+To enable preview generation for various file types, add the following to your `config.php`:
+
+```php
+'preview_imaginary_url' => 'http://imaginary:9000/',
+'enabledPreviewProviders' => [
+    'OC\Preview\TXT',
+    'OC\Preview\MarkDown',
+    'OC\Preview\OpenDocument',
+    'OC\Preview\MSOffice2003',
+    'OC\Preview\MSOffice2007',
+    'OC\Preview\MSOfficeDoc',
+    'OC\Preview\Photoshop',
+    'OC\Preview\Movie',
+    'OC\Preview\MKV',
+    'OC\Preview\MP4',
+    'OC\Preview\AVI',
+    'OC\Preview\MP3',
+    'OC\Preview\GIF',
+    'OC\Preview\Imaginary',
+    'OC\Preview\ImaginaryPDF',
+],
+```
+
+This image includes the minimal LibreOffice and ffmpeg packages required for generating previews of office documents and video files.
+
+### Imaginary
+
+This configuration uses [Imaginary](https://github.com/h2non/imaginary) for image preview generation instead of the built-in PHP-based approach.
+Imaginary is a separate microservice that offloads image processing from the Nextcloud container,
+resulting in better performance and lower memory usage on the main application.
+
+Add the following service to your `docker-compose.yml`:
+
+```yaml
+imaginary:
+  image: nextcloud/aio-imaginary:latest
+```
 
 ## Docker Hub
 

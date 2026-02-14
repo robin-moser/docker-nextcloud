@@ -2,7 +2,7 @@
 # Dockerfile: robinmoser/nextcloud
 # ++++++++++++++++++++++++++++++++++++++
 
-FROM nextcloud:32.0.5
+FROM nextcloud:32.0.6
 LABEL maintainer="Robin Moser"
 
 # Install dependencies for preview generation

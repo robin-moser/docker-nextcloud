@@ -5,7 +5,7 @@ through ImageMagick and Ghostscript integration.
 
 ## Features
 
-- Based on official Nextcloud 32 image
+- Based on official Nextcloud image
 - Integrated support for generating video and document thumbnails through ffmpeg and LibreOffice
 - Multi-platform support (linux/amd64, linux/arm64)
 

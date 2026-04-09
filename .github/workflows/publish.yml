@@ -10,6 +10,9 @@ on:
       - Dockerfile
       - .github/workflows/**
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -71,3 +74,11 @@ jobs:
           platforms: linux/amd64, linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${major}${minor}${patch}-build${{ github.run_number }}"
+          gh release create "$TAG" --title "$TAG" \
+            --notes "Docker image published: ${major}${minor}${patch}-build${{ github.run_number }}"
